@@ -24,8 +24,13 @@ func (notesController *NotesController) CreateNote(c echo.Context) error {
 	if err := c.Bind(n); err != nil {
 		return err
 	}
+	notesService := services.NewNotesService(c.Request().Context())
+	var resultingId, apiResponse = notesService.Create(n)
 
-	var resultingId, _ = services.NewNotesService(c.Request().Context()).Create(n)
+	if apiResponse != nil {
+		return c.JSON(apiResponse.HttpStatusCode, apiResponse.Detail)
+	}
+
 	c.Response().Header().Set("location", fmt.Sprintf("notes/%s", resultingId))
 	// c.Response().WriteHeader(http.StatusCreated)
 	return c.NoContent(http.StatusCreated)
@@ -40,22 +45,25 @@ func (notesController *NotesController) UpdateNote(c echo.Context) error {
 	if err := c.Bind(n); err != nil {
 		return err
 	}
-
-	var result, _ = services.NewNotesService(c.Request().Context()).Update(c.Param("id"), n)
+	notesService := services.NewNotesService(c.Request().Context())
+	var result, _ = notesService.Update(c.Param("id"), n)
 
 	return c.JSON(http.StatusOK, result)
 }
 
 func (notesController *NotesController) GetNote(c echo.Context) error {
-
-	var result, _ = services.NewNotesService(c.Request().Context()).GetById(c.Param("id"))
-
+	// return c.JSON(responseCodes.Test2BadRequest.HttpStatusCode, responseCodes.Test2BadRequest.Detail)
+	notesService := services.NewNotesService(c.Request().Context())
+	var result, err = notesService.GetById(c.Param("id"))
+	if err != nil {
+		return c.JSON(err.HttpStatusCode, err.Detail)
+	}
 	return c.JSON(http.StatusOK, result)
 }
 
 func (notesController *NotesController) DeleteNote(c echo.Context) error {
-
-	if err := services.NewNotesService(c.Request().Context()).Delete(c.Param("id")); err != nil {
+	notesService := services.NewNotesService(c.Request().Context())
+	if err := notesService.Delete(c.Param("id")); err != nil {
 		return c.NoContent(http.StatusBadRequest)
 	}
 
@@ -63,8 +71,8 @@ func (notesController *NotesController) DeleteNote(c echo.Context) error {
 }
 
 func (notesController *NotesController) GetNotes(c echo.Context) error {
-
-	var result, _ = services.NewNotesService(c.Request().Context()).List()
+	notesService := services.NewNotesService(c.Request().Context())
+	var result, _ = notesService.List()
 
 	return c.JSON(http.StatusOK, result)
 }

@@ -28,4 +28,8 @@ func addRoutes(e *echo.Echo) {
 	e.PUT("/notes/:id", notesController.UpdateNote)
 	e.DELETE("/notes/:id", notesController.DeleteNote)
 	e.GET("/notes", notesController.GetNotes)
+
+	authController := controllers.NewAuthController()
+	e.POST("/sign-in", authController.SignIn)
+	e.POST("/sign-up", authController.SignUp)
 }

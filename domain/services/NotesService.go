@@ -2,11 +2,13 @@ package services
 
 import (
 	"context"
+	"strings"
 	"time"
 
 	db "github.com/MigueLopArc/ArchitectureTestGoLang/data"
 	repos "github.com/MigueLopArc/ArchitectureTestGoLang/domain/dal/repositories"
 	models "github.com/MigueLopArc/ArchitectureTestGoLang/domain/models"
+	"github.com/MigueLopArc/ArchitectureTestGoLang/domain/models/responseCodes"
 	DTOs "github.com/MigueLopArc/ArchitectureTestGoLang/presentation/models"
 )
 
@@ -27,7 +29,21 @@ func NewNotesService(ctx context.Context) INotesService {
 	}
 }
 
-func (notesService *NotesService) Create(request *DTOs.NoteDTO) (string, error) {
+func (notesService *NotesService) Create(request *DTOs.NoteDTO) (string, *responseCodes.ApiResponse) {
+
+	var errors []responseCodes.CommonResponseDetail = []responseCodes.CommonResponseDetail{}
+
+	if len(strings.TrimSpace(request.Title)) < 3 {
+		errors = append(errors, *responseCodes.NoteTitleNotFound)
+	}
+	if len(strings.TrimSpace(request.Content)) == 0 {
+		errors = append(errors, *responseCodes.NoteContentNotFound)
+	}
+
+	if len(errors) > 0 {
+		apiResponse := responseCodes.BuildBadRequestMessage(errors)
+		return "", &apiResponse
+	}
 
 	var note *models.Note = &models.Note{
 		Title:   request.Title,
@@ -35,9 +51,9 @@ func (notesService *NotesService) Create(request *DTOs.NoteDTO) (string, error) 
 		UserId:  request.UserId,
 	}
 
-	id, _ := notesService.NotesRepository.Create(notesService.context, note)
+	id, err := notesService.NotesRepository.Create(notesService.context, note)
 
-	return id, nil
+	return id, err
 }
 
 func (notesService *NotesService) Update(id string, request *DTOs.NoteDTO) (*models.Note, error) {
@@ -74,11 +90,11 @@ func (notesService *NotesService) Delete(id string) error {
 	return nil
 }
 
-func (notesService *NotesService) GetById(id string) (*models.Note, error) {
+func (notesService *NotesService) GetById(id string) (*models.Note, *responseCodes.ApiResponse) {
 
-	result, _ := notesService.NotesRepository.GetById(notesService.context, id)
+	result, err := notesService.NotesRepository.GetById(notesService.context, id)
 
-	return result, nil
+	return result, err
 }
 
 func (notesService *NotesService) List() ([]*models.Note, error) {

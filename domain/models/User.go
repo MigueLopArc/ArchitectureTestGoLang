@@ -1,10 +1,14 @@
 package models
 
+import (
+	"time"
+)
+
 type User struct {
-	Username  string `json:"username"`
-	Firstname string `json:"firstname,omitempty"`
-	Lastname  string `json:"lastname,omitempty"`
-	Password  string `json:"password,omitempty"`
-	Token     string `json:"token,omitempty"`
-	CreatedAt string `json:"date_created,omitempty"`
+	Id           string
+	Email        string
+	Firstname    string
+	Lastname     string
+	Password     string
+	CreationDate time.Time
 }

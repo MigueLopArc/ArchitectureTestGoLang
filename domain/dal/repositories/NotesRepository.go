@@ -2,9 +2,11 @@ package repositories
 
 import (
 	"context"
+	"database/sql"
 
 	db "github.com/MigueLopArc/ArchitectureTestGoLang/data"
 	models "github.com/MigueLopArc/ArchitectureTestGoLang/domain/models"
+	"github.com/MigueLopArc/ArchitectureTestGoLang/domain/models/responseCodes"
 )
 
 type NotesRepository struct {
@@ -42,7 +44,7 @@ func (notesRepo *NotesRepository) List(ctx context.Context, limit, offset uint) 
 	return notes, nil
 }
 
-func (notesRepo *NotesRepository) GetById(ctx context.Context, id string) (*models.Note, error) {
+func (notesRepo *NotesRepository) GetById(ctx context.Context, id string) (*models.Note, *responseCodes.ApiResponse) {
 	q := `
         SELECT * FROM notes WHERE id = $1;
     `
@@ -55,13 +57,16 @@ func (notesRepo *NotesRepository) GetById(ctx context.Context, id string) (*mode
 		&note.ModificationDate)
 
 	if err != nil {
-		return &models.Note{}, err
+		if err == sql.ErrNoRows {
+			return nil, &responseCodes.EntityNotFound
+		}
+		return nil, &responseCodes.UnknownError
 	}
 
 	return &note, nil
 }
 
-func (notesRepo *NotesRepository) Create(ctx context.Context, note *models.Note) (string, error) {
+func (notesRepo *NotesRepository) Create(ctx context.Context, note *models.Note) (string, *responseCodes.ApiResponse) {
 	q := `
         INSERT INTO notes (title, content, user_id)
             VALUES ($1, $2, $3)
@@ -75,7 +80,8 @@ func (notesRepo *NotesRepository) Create(ctx context.Context, note *models.Note)
 	err := row.Scan(&note.Id)
 
 	if err != nil {
-		return "", err
+		/// Real errors should be catch and rethrow as an Unknown error for security reasons
+		return "", &responseCodes.UnknownError
 	}
 
 	return note.Id, nil
