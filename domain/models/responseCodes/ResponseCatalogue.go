@@ -29,7 +29,7 @@ var (
 		HttpStatusCode: 404,
 		Detail: &CommonResponseDetail{
 			ResponseDetail: ResponseDetail{Code: "auth-0006"},
-			Message:        "No se concontro información del usuario",
+			Message:        "No se encontro información del usuario",
 		},
 	}
 
@@ -41,11 +41,19 @@ var (
 		},
 	}
 
+	UserAlreadyExists = ApiResponse{
+		HttpStatusCode: 400,
+		Detail: &CommonResponseDetail{
+			ResponseDetail: ResponseDetail{Code: "auth-0010"},
+			Message:        "Este correo electrónico ya esta registrado",
+		},
+	}
+
 	EntityNotFound = ApiResponse{
 		HttpStatusCode: 404,
 		Detail: &CommonResponseDetail{
 			ResponseDetail: ResponseDetail{Code: "entity-not-found"},
-			Message:        "No se concontro información del recurso solicitado",
+			Message:        "No se encontro información del recurso solicitado",
 		},
 	}
 

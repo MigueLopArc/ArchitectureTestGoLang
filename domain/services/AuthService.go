@@ -2,12 +2,15 @@ package services
 
 import (
 	"context"
+	"fmt"
 	"net/mail"
 	"strings"
 
 	db "github.com/MigueLopArc/ArchitectureTestGoLang/data"
 	repos "github.com/MigueLopArc/ArchitectureTestGoLang/domain/dal/repositories"
+	"github.com/MigueLopArc/ArchitectureTestGoLang/domain/helpers"
 	models "github.com/MigueLopArc/ArchitectureTestGoLang/domain/models"
+	"github.com/MigueLopArc/ArchitectureTestGoLang/domain/models/auth"
 	"github.com/MigueLopArc/ArchitectureTestGoLang/domain/models/responseCodes"
 	DTOs "github.com/MigueLopArc/ArchitectureTestGoLang/presentation/models"
 	"golang.org/x/crypto/bcrypt"
@@ -16,6 +19,7 @@ import (
 type AuthService struct {
 	UsersRepository repos.IUsersRepository
 	context         context.Context
+	TokenGenerator  helpers.TokenGenerator
 }
 
 // https://stackoverflow.com/questions/40823315/x-does-not-implement-y-method-has-a-pointer-receiver
@@ -27,10 +31,11 @@ func NewAuthService(ctx context.Context) IAuthService {
 	return &AuthService{
 		UsersRepository: usersRepo,
 		context:         ctx,
+		TokenGenerator:  *helpers.NewTokenGenerator(),
 	}
 }
 
-func (authService *AuthService) SignUp(request *DTOs.SignUpModel) (*models.User, *responseCodes.ApiResponse) {
+func (authService *AuthService) SignUp(request *DTOs.SignUpModel) (*auth.JsonWebToken, *responseCodes.ApiResponse) {
 
 	var errors []responseCodes.CommonResponseDetail = []responseCodes.CommonResponseDetail{}
 
@@ -43,7 +48,7 @@ func (authService *AuthService) SignUp(request *DTOs.SignUpModel) (*models.User,
 	if len(strings.TrimSpace(request.FirstName)) == 0 {
 		errors = append(errors, *responseCodes.UserFirstNameNotFound)
 	}
-	if len(strings.TrimSpace(request.FirstName)) == 0 {
+	if len(strings.TrimSpace(request.LastName)) == 0 {
 		errors = append(errors, *responseCodes.UserLastNameNotFound)
 	}
 
@@ -68,10 +73,20 @@ func (authService *AuthService) SignUp(request *DTOs.SignUpModel) (*models.User,
 	id, err := authService.UsersRepository.Create(authService.context, user)
 	user.Id = id
 
-	return user, err
+	token, tokenErr := authService.TokenGenerator.GenerateJwtToken(&auth.JwtUserIdentity{
+		UserId:   user.Id,
+		UserName: fmt.Sprintf("%s %s", user.Firstname, user.Lastname),
+		Email:    user.Email,
+	})
+
+	if tokenErr != nil {
+		return nil, &responseCodes.UnknownError
+	}
+
+	return token, err
 }
 
-func (authService *AuthService) SignIn(request *DTOs.SignInModel) (*models.User, *responseCodes.ApiResponse) {
+func (authService *AuthService) SignIn(request *DTOs.SignInModel) (*auth.JsonWebToken, *responseCodes.ApiResponse) {
 	var errors []responseCodes.CommonResponseDetail = []responseCodes.CommonResponseDetail{}
 
 	if !emailIsValid(request.Email) {
@@ -97,7 +112,17 @@ func (authService *AuthService) SignIn(request *DTOs.SignInModel) (*models.User,
 		return nil, &responseCodes.WrongPassword
 	}
 
-	return user, err
+	token, tokenErr := authService.TokenGenerator.GenerateJwtToken(&auth.JwtUserIdentity{
+		UserId:   user.Id,
+		UserName: fmt.Sprintf("%s %s", user.Firstname, user.Lastname),
+		Email:    user.Email,
+	})
+
+	if tokenErr != nil {
+		return nil, &responseCodes.UnknownError
+	}
+
+	return token, err
 }
 
 func emailIsValid(email string) bool {

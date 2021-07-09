@@ -7,6 +7,7 @@ import (
 	db "github.com/MigueLopArc/ArchitectureTestGoLang/data"
 	models "github.com/MigueLopArc/ArchitectureTestGoLang/domain/models"
 	"github.com/MigueLopArc/ArchitectureTestGoLang/domain/models/responseCodes"
+	"github.com/lib/pq"
 )
 
 type UsersRepository struct {
@@ -57,6 +58,9 @@ func (notesRepo *UsersRepository) Create(ctx context.Context, user *models.User)
 
 	if err != nil {
 		/// Real errors should be catch and rethrow as an Unknown error for security reasons
+		if err.(*pq.Error).Code == "23505" { // Duplicate index violation (In this case the email)
+			return "", &responseCodes.UserAlreadyExists
+		}
 		return "", &responseCodes.UnknownError
 	}
 

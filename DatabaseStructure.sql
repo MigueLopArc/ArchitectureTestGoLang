@@ -21,4 +21,7 @@ CREATE TABLE "notes" (
 
 
 
-ALTER TABLE "notes" ADD FOREIGN KEY ("user_id") REFERENCES "users" ("id");
+ALTER TABLE "notes" ADD FOREIGN KEY ("user_id") REFERENCES "users" ("id") ON DELETE CASCADE;
+
+CREATE UNIQUE INDEX users_index_unique_email
+ON users(email);

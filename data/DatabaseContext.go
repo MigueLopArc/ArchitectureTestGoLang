@@ -6,6 +6,7 @@ import (
 	"log"
 	"sync"
 
+	"github.com/MigueLopArc/ArchitectureTestGoLang/config"
 	_ "github.com/lib/pq"
 )
 
@@ -35,8 +36,9 @@ func New() *DatabaseContext {
 }
 
 func getConnection() (*sql.DB, error) {
-	psqlInfo := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable",
-		host, port, user, password, dbname)
+	config := config.GetEnv()
+	psqlInfo := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=disable",
+		config.Database.Host, config.Database.Port, config.Database.User, config.Database.Password, config.Database.Name)
 	return sql.Open("postgres", psqlInfo)
 }
 

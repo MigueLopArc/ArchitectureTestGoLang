@@ -2,6 +2,7 @@ package main
 
 import (
 	"github.com/MigueLopArc/ArchitectureTestGoLang/presentation/controllers"
+	"github.com/MigueLopArc/ArchitectureTestGoLang/presentation/middlewares"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 )
@@ -23,11 +24,13 @@ func main() {
 
 func addRoutes(e *echo.Echo) {
 	notesController := controllers.NewNotesController()
-	e.POST("/notes", notesController.CreateNote)
-	e.GET("/notes/:id", notesController.GetNote)
-	e.PUT("/notes/:id", notesController.UpdateNote)
-	e.DELETE("/notes/:id", notesController.DeleteNote)
-	e.GET("/notes", notesController.GetNotes)
+	notes := e.Group("/notes", middlewares.ValidateJwt) // Add middleware to all notes endpoints
+	notes.POST("", notesController.CreateNote)
+	//e.GET("/notes/:id", notesController.GetNote, middlewares.ValidateJwt)
+	notes.GET("/:id", notesController.GetNote)
+	notes.PUT("/:id", notesController.UpdateNote)
+	notes.DELETE("/:id", notesController.DeleteNote)
+	notes.GET("", notesController.GetNotes)
 
 	authController := controllers.NewAuthController()
 	e.POST("/sign-in", authController.SignIn)
