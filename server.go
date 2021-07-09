@@ -30,7 +30,7 @@ func addRoutes(e *echo.Echo) {
 	notes.GET("/:id", notesController.GetNote)
 	notes.PUT("/:id", notesController.UpdateNote)
 	notes.DELETE("/:id", notesController.DeleteNote)
-	notes.GET("", notesController.GetNotes)
+	notes.GET("", notesController.GetUserNotes)
 
 	authController := controllers.NewAuthController()
 	e.POST("/sign-in", authController.SignIn)

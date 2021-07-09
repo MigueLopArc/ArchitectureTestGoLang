@@ -20,20 +20,20 @@ func NewNotesRepo(dbContext *db.DatabaseContext) INotesRepository {
 	}
 }
 
-func (notesRepo *NotesRepository) List(ctx context.Context, limit, offset uint) ([]*models.Note, error) {
+func (notesRepo *NotesRepository) GetUserNotes(ctx context.Context, userId string) ([]*models.Note, *responseCodes.ApiResponse) {
 	q := `
-        SELECT * FROM notes;
+        SELECT * FROM notes WHERE user_id = $1;
     `
 
-	rows, err := notesRepo.DbContext.DB.QueryContext(ctx, q)
+	rows, err := notesRepo.DbContext.DB.QueryContext(ctx, q, userId)
 
 	if err != nil {
-		return nil, err
+		return nil, &responseCodes.UnknownError
 	}
 
 	defer rows.Close()
 
-	var notes []*models.Note
+	var notes []*models.Note = []*models.Note{}
 	for rows.Next() {
 		var note models.Note
 		rows.Scan(&note.Id, &note.UserId, &note.Title, &note.Content,
@@ -87,7 +87,7 @@ func (notesRepo *NotesRepository) Create(ctx context.Context, note *models.Note)
 	return note.Id, nil
 }
 
-func (notesRepo *NotesRepository) Update(ctx context.Context, id string, note *models.Note) error {
+func (notesRepo *NotesRepository) Update(ctx context.Context, id string, note *models.Note) *responseCodes.ApiResponse {
 	q := `
     UPDATE notes SET title = $1, content = $2, modification_date = $3
         WHERE id=$4;
@@ -95,7 +95,7 @@ func (notesRepo *NotesRepository) Update(ctx context.Context, id string, note *m
 
 	stmt, err := notesRepo.DbContext.DB.PrepareContext(ctx, q)
 	if err != nil {
-		return err
+		return &responseCodes.UnknownError
 	}
 
 	defer stmt.Close()
@@ -105,25 +105,25 @@ func (notesRepo *NotesRepository) Update(ctx context.Context, id string, note *m
 	)
 
 	if err != nil {
-		return err
+		return &responseCodes.UnknownError
 	}
 
 	return nil
 }
 
-func (notesRepo *NotesRepository) Delete(ctx context.Context, id string) error {
+func (notesRepo *NotesRepository) Delete(ctx context.Context, id string) *responseCodes.ApiResponse {
 	q := `DELETE FROM notes WHERE id=$1;`
 
 	stmt, err := notesRepo.DbContext.DB.PrepareContext(ctx, q)
 	if err != nil {
-		return err
+		return &responseCodes.UnknownError
 	}
 
 	defer stmt.Close()
 
 	_, err = stmt.ExecContext(ctx, id)
 	if err != nil {
-		return err
+		return &responseCodes.UnknownError
 	}
 
 	return nil

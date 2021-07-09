@@ -28,7 +28,7 @@ var (
 	UserNotFound = ApiResponse{
 		HttpStatusCode: 404,
 		Detail: &CommonResponseDetail{
-			ResponseDetail: ResponseDetail{Code: "auth-0006"},
+			ResponseDetail: ResponseDetail{Code: "auth-0003"},
 			Message:        "No se encontro información del usuario",
 		},
 	}
@@ -36,7 +36,7 @@ var (
 	WrongPassword = ApiResponse{
 		HttpStatusCode: 400,
 		Detail: &CommonResponseDetail{
-			ResponseDetail: ResponseDetail{Code: "auth-0007"},
+			ResponseDetail: ResponseDetail{Code: "auth-0004"},
 			Message:        "La contraseña no es correcta",
 		},
 	}
@@ -44,28 +44,20 @@ var (
 	UserAlreadyExists = ApiResponse{
 		HttpStatusCode: 400,
 		Detail: &CommonResponseDetail{
-			ResponseDetail: ResponseDetail{Code: "auth-0010"},
+			ResponseDetail: ResponseDetail{Code: "auth-0005"},
 			Message:        "Este correo electrónico ya esta registrado",
-		},
-	}
-
-	EntityNotFound = ApiResponse{
-		HttpStatusCode: 404,
-		Detail: &CommonResponseDetail{
-			ResponseDetail: ResponseDetail{Code: "entity-not-found"},
-			Message:        "No se encontro información del recurso solicitado",
 		},
 	}
 
 	// Here start the codes for Bad Request
 
 	InvalidEmail = &CommonResponseDetail{
-		ResponseDetail: ResponseDetail{Code: "auth-0004"},
+		ResponseDetail: ResponseDetail{Code: "auth-0006"},
 		Message:        "Correo electrónico inválido",
 	}
 
 	InvalidPassword = &CommonResponseDetail{
-		ResponseDetail: ResponseDetail{Code: "auth-0005"},
+		ResponseDetail: ResponseDetail{Code: "auth-0007"},
 		Message:        "La contraseña no es válida, debe tener al menos 6 caracteres",
 	}
 
@@ -79,6 +71,22 @@ var (
 		Message:        "Se debe especificar el apellido de usuario",
 	}
 
+	EntityNotFound = ApiResponse{
+		HttpStatusCode: 404,
+		Detail: &CommonResponseDetail{
+			ResponseDetail: ResponseDetail{Code: "entity-not-found"},
+			Message:        "No se encontro información del recurso solicitado",
+		},
+	}
+
+	EntityDoesNotBelongToUser = ApiResponse{
+		HttpStatusCode: 403,
+		Detail: &CommonResponseDetail{
+			ResponseDetail: ResponseDetail{Code: "entity-does-not-belong-to-you"},
+			Message:        "No puedes editar ni consultar esta entidad, ya que no te pertenece",
+		},
+	}
+
 	NoteTitleNotFound = &CommonResponseDetail{
 		ResponseDetail: ResponseDetail{Code: "notes-0001"},
 		Message:        "Es necesario especificar el titulo de la nota y debe tener al menos 3 caracteres",
@@ -88,33 +96,6 @@ var (
 		ResponseDetail: ResponseDetail{Code: "notes-0002"},
 		Message:        "Se debe especificar el contenido de la nota",
 	}
-	/*
-		Detail1 = &CommonResponseDetail{
-			ResponseDetail: ResponseDetail{Code: "notes-0001"},
-			Message:        "Es necesario el id de nota",
-		}
-
-		Detail2 = &CommonResponseDetail{
-			ResponseDetail: ResponseDetail{Code: "notes-0002"},
-			Message:        "Es necesario el titulo de nota",
-		}
-
-		Test1BadRequest = ApiResponse{
-			HttpStatusCode: 400,
-			Detail: &BadRequestDetail{
-				ResponseDetail: ResponseDetail{Code: "validation-errors"},
-				Details:        []string{"Ocurrió un error desconocido", "Otro error", "mas errores"},
-			},
-		}
-
-		Test2BadRequest = ApiResponse{
-			HttpStatusCode: 400,
-			Detail: &MultiDetailResponse{
-				ResponseDetail: ResponseDetail{Code: "validation-errors"},
-				Details:        []CommonResponseDetail{*Detail1, *Detail2},
-			},
-		}
-	*/
 )
 
 func BuildBadRequestMessage(errors []CommonResponseDetail) ApiResponse {

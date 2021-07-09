@@ -46,7 +46,7 @@ func (tokenGenerator *TokenGenerator) GenerateJwtToken(userIdentity *auth.JwtUse
 		Token:     tokenString,
 		Email:     userIdentity.Email,
 		UserId:    userIdentity.UserId,
-		ExpiresIn: claims.ExpiresAt,
+		ExpiresAt: claims.ExpiresAt,
 	}, nil
 }
 

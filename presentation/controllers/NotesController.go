@@ -17,14 +17,13 @@ func NewNotesController() NotesController {
 
 // Handler
 func (notesController *NotesController) CreateNote(c echo.Context) error {
-	n := &DTOs.NoteDTO{
-		UserId: "0029f464-ea55-4ab2-8549-990695c18e02", // This should be bind from JWT
-	}
+	userId := c.Get(echo.HeaderAuthorization).(string)
+	n := &DTOs.NoteDTO{}
 
 	if err := c.Bind(n); err != nil {
 		return err
 	}
-	notesService := services.NewNotesService(c.Request().Context())
+	notesService := services.NewNotesService(c.Request().Context(), userId)
 	var resultingId, apiResponse = notesService.Create(n)
 
 	if apiResponse != nil {
@@ -38,23 +37,28 @@ func (notesController *NotesController) CreateNote(c echo.Context) error {
 
 // Handler
 func (notesController *NotesController) UpdateNote(c echo.Context) error {
-	n := &DTOs.NoteDTO{
-		UserId: "0029f464-ea55-4ab2-8549-990695c18e02", // This should be bind from JWT
-	}
+	userId := c.Get(echo.HeaderAuthorization).(string)
+	n := &DTOs.NoteDTO{}
 
 	if err := c.Bind(n); err != nil {
 		return err
 	}
-	notesService := services.NewNotesService(c.Request().Context())
-	var result, _ = notesService.Update(c.Param("id"), n)
+	notesService := services.NewNotesService(c.Request().Context(), userId)
+	var result, err = notesService.Update(c.Param("id"), n)
+
+	if err != nil {
+		return c.JSON(err.HttpStatusCode, err.Detail)
+	}
 
 	return c.JSON(http.StatusOK, result)
 }
 
 func (notesController *NotesController) GetNote(c echo.Context) error {
 	// return c.JSON(responseCodes.Test2BadRequest.HttpStatusCode, responseCodes.Test2BadRequest.Detail)
-	notesService := services.NewNotesService(c.Request().Context())
-	var result, err = notesService.GetById(c.Param("id"))
+	userId := c.Get(echo.HeaderAuthorization).(string)
+	noteId := c.Param("id")
+	notesService := services.NewNotesService(c.Request().Context(), userId)
+	var result, err = notesService.GetById(noteId)
 	if err != nil {
 		return c.JSON(err.HttpStatusCode, err.Detail)
 	}
@@ -62,17 +66,22 @@ func (notesController *NotesController) GetNote(c echo.Context) error {
 }
 
 func (notesController *NotesController) DeleteNote(c echo.Context) error {
-	notesService := services.NewNotesService(c.Request().Context())
-	if err := notesService.Delete(c.Param("id")); err != nil {
-		return c.NoContent(http.StatusBadRequest)
+	userId := c.Get(echo.HeaderAuthorization).(string)
+	noteId := c.Param("id")
+	notesService := services.NewNotesService(c.Request().Context(), userId)
+	if err := notesService.Delete(noteId); err != nil {
+		return c.JSON(err.HttpStatusCode, err.Detail)
 	}
 
 	return c.NoContent(http.StatusNoContent)
 }
 
-func (notesController *NotesController) GetNotes(c echo.Context) error {
-	notesService := services.NewNotesService(c.Request().Context())
-	var result, _ = notesService.List()
-
+func (notesController *NotesController) GetUserNotes(c echo.Context) error {
+	userId := c.Get(echo.HeaderAuthorization).(string)
+	notesService := services.NewNotesService(c.Request().Context(), userId)
+	var result, err = notesService.GetUserNotes()
+	if err != nil {
+		return c.JSON(err.HttpStatusCode, err.Detail)
+	}
 	return c.JSON(http.StatusOK, result)
 }

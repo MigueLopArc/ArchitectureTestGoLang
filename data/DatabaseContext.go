@@ -10,14 +10,6 @@ import (
 	_ "github.com/lib/pq"
 )
 
-const (
-	host     = "localhost"
-	port     = 5433
-	user     = "postgres"
-	password = "postgres"
-	dbname   = "postgres"
-)
-
 var (
 	data *DatabaseContext
 	once sync.Once

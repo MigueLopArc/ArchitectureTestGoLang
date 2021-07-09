@@ -15,10 +15,11 @@ import (
 type NotesService struct {
 	NotesRepository repos.INotesRepository
 	context         context.Context
+	UserId          string
 }
 
 // https://stackoverflow.com/questions/40823315/x-does-not-implement-y-method-has-a-pointer-receiver
-func NewNotesService(ctx context.Context) INotesService {
+func NewNotesService(ctx context.Context, userId string) INotesService {
 	var dbContext = db.New()
 
 	var notesRepo repos.INotesRepository = repos.NewNotesRepo(dbContext)
@@ -26,6 +27,7 @@ func NewNotesService(ctx context.Context) INotesService {
 	return &NotesService{
 		NotesRepository: notesRepo,
 		context:         ctx,
+		UserId:          userId,
 	}
 }
 
@@ -48,7 +50,7 @@ func (notesService *NotesService) Create(request *DTOs.NoteDTO) (string, *respon
 	var note *models.Note = &models.Note{
 		Title:   request.Title,
 		Content: request.Content,
-		UserId:  request.UserId,
+		UserId:  notesService.UserId,
 	}
 
 	id, err := notesService.NotesRepository.Create(notesService.context, note)
@@ -56,14 +58,22 @@ func (notesService *NotesService) Create(request *DTOs.NoteDTO) (string, *respon
 	return id, err
 }
 
-func (notesService *NotesService) Update(id string, request *DTOs.NoteDTO) (*models.Note, error) {
+func (notesService *NotesService) Update(id string, request *DTOs.NoteDTO) (*models.Note, *responseCodes.ApiResponse) {
 
-	oldNoteData, _ := notesService.NotesRepository.GetById(notesService.context, id)
+	oldNoteData, getErr := notesService.NotesRepository.GetById(notesService.context, id)
+
+	if getErr != nil {
+		return nil, getErr
+	}
 
 	var note *models.Note = &models.Note{
 		Title:            request.Title,
 		Content:          request.Content,
 		ModificationDate: time.Now(),
+	}
+
+	if oldNoteData.UserId != notesService.UserId {
+		return nil, &responseCodes.EntityDoesNotBelongToUser
 	}
 
 	err := notesService.NotesRepository.Update(notesService.context, id, note)
@@ -79,7 +89,16 @@ func (notesService *NotesService) Update(id string, request *DTOs.NoteDTO) (*mod
 	return oldNoteData, nil
 }
 
-func (notesService *NotesService) Delete(id string) error {
+func (notesService *NotesService) Delete(id string) *responseCodes.ApiResponse {
+	oldNoteData, getErr := notesService.NotesRepository.GetById(notesService.context, id)
+
+	if getErr != nil {
+		return getErr
+	}
+
+	if oldNoteData.UserId != notesService.UserId {
+		return &responseCodes.EntityDoesNotBelongToUser
+	}
 
 	err := notesService.NotesRepository.Delete(notesService.context, id)
 
@@ -94,11 +113,19 @@ func (notesService *NotesService) GetById(id string) (*models.Note, *responseCod
 
 	result, err := notesService.NotesRepository.GetById(notesService.context, id)
 
+	if err != nil {
+		return nil, err
+	}
+
+	if result.UserId != notesService.UserId {
+		return nil, &responseCodes.EntityDoesNotBelongToUser
+	}
+
 	return result, err
 }
 
-func (notesService *NotesService) List() ([]*models.Note, error) {
-	result, _ := notesService.NotesRepository.List(notesService.context, 0, 0)
+func (notesService *NotesService) GetUserNotes() ([]*models.Note, *responseCodes.ApiResponse) {
+	result, err := notesService.NotesRepository.GetUserNotes(notesService.context, notesService.UserId)
 
-	return result, nil
+	return result, err
 }
